@@ -13,6 +13,9 @@
 - fixed settings submission issues for unset b2c_verify_tokens config element
 - added ability to set if new users show see the admin bar or not
 
+### Screenshot of settings page
+![alt text](./img/SettingsPage.png)
+
 ## active-directory-b2c-wordpress-plugin-openidconnect
 This repo contains the code for a WordPress plugin that allows users to authenticate with Azure AD B2C using OpenID Connect. Admins have the ability to configure several B2C policies: general sign-in/sign-up without multifactor authetication, admin sign-in/sign-up with multifactor authentication (optional), and profile editing. 
 
