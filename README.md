@@ -1,3 +1,17 @@
+## Updated code to fully support b2clogin.com as off May 2020
+- Updated to support b2clogin
+- added support for setting B2C Scope
+- added support for password reset folicy
+- added support for setting the default new user role
+- added support for retrieving display name
+- added error handling for claims that don't exist in B2C tenant (eg. firstname, lastname)
+- updated phpseclib to latest release 2.0.27
+- fixed issue with falsely encoded redirect after authentication
+- added error handling for cancelled sign-in/-up flow and pwd reset flow
+- updated settings descriptions
+- change redirect url from site_url() to home_url()
+- fixed settings submission issues for unset b2c_verify_tokens config element
+
 ## active-directory-b2c-wordpress-plugin-openidconnect
 This repo contains the code for a WordPress plugin that allows users to authenticate with Azure AD B2C using OpenID Connect. Admins have the ability to configure several B2C policies: general sign-in/sign-up without multifactor authetication, admin sign-in/sign-up with multifactor authentication (optional), and profile editing. 
 
