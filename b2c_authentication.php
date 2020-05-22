@@ -70,9 +70,31 @@ function b2c_logout() {
 function b2c_verify_token() {
 	try {
 		if (isset($_POST['error'])) {
-			echo 'Unable to log in';
-			echo '<br/>error:' . $_POST['error'];
-			echo '<br/>error_description:' . $_POST['error_description'];
+
+			// If user requests the Password Reset flow from a Sign-in/Sign-up flow, the following is returned:
+			//   Error: access_denied
+			//   Description: AADB2C90118: The user has forgotten their password.
+			if (preg_match('/.*AADB2C90118.*/i', $_POST['error_description'])) {
+				// user forgot password so redirect to the password reset flow
+				b2c_password_reset();
+				exit;
+			}
+
+			// If user cancels the Sign-up portion of the Sign-in/Sign-up flow or
+			// if user cancels the Profile Edit flow, the following is returned:
+			//   Error: access_denied
+			//   Description: AADB2C90091: The user has cancelled entering self-asserted information.
+			if (preg_match('/.*AADB2C90091.*/i', $_POST['error_description'])) {
+				// user cancelled profile editing or cancelled signing up
+				// so redirect to the home page instead of showing an error
+				wp_safe_redirect(B2C_Settings::$redirect_uri);
+				exit;
+			}
+
+			echo 'Authentication error on ' . get_bloginfo('name') . '.';
+			echo '<br>Error: ' . $_POST['error'];
+			echo '<br>Description: ' . $_POST['error_description'];
+			echo '<br><br><a href="' . B2C_Settings::$redirect_uri . '">Go to ' . B2C_Settings::$redirect_uri . '</a>';
 			exit;
 		}
 
@@ -110,6 +132,7 @@ function b2c_verify_token() {
 				
 				$first_name = $token_checker->get_claim('given_name');
 				$last_name = $token_checker->get_claim('family_name');
+				$name = $token_checker->get_claim('name');
 
 				$our_userdata = array (
 						'ID' => 0,
@@ -118,7 +141,7 @@ function b2c_verify_token() {
 						'user_registered' => true,
 						'user_status' => 0,
 						'user_email' => $email,
-						'display_name' => $first_name . ' ' . $last_name,
+						'display_name' => $name,
 						'first_name' => $first_name,
 						'last_name' => $last_name
 						);
@@ -128,10 +151,11 @@ function b2c_verify_token() {
 				
 				$first_name = $token_checker->get_claim('given_name');
 				$last_name = $token_checker->get_claim('family_name');
+				$name = $token_checker->get_claim('name');
 				
 				$our_userdata = array (
 										'ID' => $user->ID,
-										'display_name' => $first_name . ' ' . $last_name,
+										'display_name' => $name,
 										'first_name' => $first_name,
 										'last_name' => $last_name
 										);
@@ -145,12 +169,15 @@ function b2c_verify_token() {
 			$wp_user = new WP_User($userID); 
 			if (in_array('administrator', $wp_user->roles)) {
 					
-				// If user did not authenticate with admin_policy, redirect to admin policy
-				if (mb_strtolower($token_checker->get_claim('tfp')) != mb_strtolower(B2C_Settings::$admin_policy)) {
-					$b2c_endpoint_handler = new B2C_Endpoint_Handler(B2C_Settings::$admin_policy);
-					$authorization_endpoint = $b2c_endpoint_handler->get_authorization_endpoint().'&state=admin';
-					wp_redirect($authorization_endpoint);
-					exit;
+				// If there is a separate admin policy
+				if(mb_strtolower(B2C_Settings::$admin_policy) != mb_strtolower(B2C_Settings::$generic_policy)){
+					// If user did not authenticate with admin_policy, redirect to admin policy
+					if (mb_strtolower($token_checker->get_claim('tfp')) != mb_strtolower(B2C_Settings::$admin_policy)) {
+						$b2c_endpoint_handler = new B2C_Endpoint_Handler(B2C_Settings::$admin_policy);
+						$authorization_endpoint = $b2c_endpoint_handler->get_authorization_endpoint().'&state=admin';
+						wp_redirect($authorization_endpoint);
+						exit;
+					}
 				}
 			}
 			
@@ -158,7 +185,7 @@ function b2c_verify_token() {
 			wp_set_auth_cookie($userID);
 				
 			// Redirect to home page
-			wp_safe_redirect(site_url() . '/');
+			wp_safe_redirect(B2C_Settings::$redirect_uri);
 			exit;
 		}
 	} catch (Exception $e) {
@@ -191,6 +218,20 @@ function b2c_edit_profile() {
 	}
 }
 
+/**
+ * Redirects to B2C on a password reset request.
+ */
+ function b2c_password_reset() {
+	try {
+		$b2c_endpoint_handler = new B2C_Endpoint_Handler(B2C_Settings::$password_reset_policy);
+		$authorization_endpoint = $b2c_endpoint_handler->get_authorization_endpoint().'&state=password_reset';
+		wp_redirect($authorization_endpoint);
+	}
+	catch (Exception $e) {
+		echo $e->getMessage();
+	}
+	exit;
+}
 /** 
  * Hooks onto the WP login action, so when user logs in on WordPress, user is redirected
  * to B2C's authorization endpoint. 
@@ -215,4 +256,12 @@ add_action('wp_loaded', 'b2c_verify_token');
  * they are redirected to B2C's logout endpoint.
  */
 add_action('wp_logout', 'b2c_logout');
+
+/** 
+ * Hooks onto the WP lost password action, so user is redirected
+ * to B2C's password reset endpoint. 
+ * 
+ * example.com/wp-login.php?action=lostpassword
+ */
+ add_action('login_form_lostpassword', 'b2c_password_reset');
 

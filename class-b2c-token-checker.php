@@ -70,7 +70,7 @@ class B2C_Token_Checker {
 			$n = $this->convert_base64url_to_base64($n);
 
 			// Convert RSA(e,n) format to PEM format
-			$rsa = new Crypt_RSA();
+			$rsa = new \phpseclib\Crypt\RSA();
 			$rsa->setPublicKey('<RSAKeyValue>
 				<Modulus>' . $n . '</Modulus>
 				<Exponent>' . $e . '</Exponent>
@@ -144,7 +144,9 @@ class B2C_Token_Checker {
 	 * Extracts a claim from the ID token.
 	 */
 	public function get_claim($name) {
-		return $this->payload[$name];
+		if(isset($this->payload[$name]))
+			return $this->payload[$name];
+		return ""; // claim no available in payload
 	}
 }
 

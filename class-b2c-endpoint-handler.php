@@ -10,9 +10,11 @@ class B2C_Endpoint_Handler {
 	
 	public function __construct($policy_name) {
 		$this->metadata_endpoint = B2C_Settings::metadata_endpoint_begin() . $policy_name;
+		//echo $this->metadata_endpoint;
 		$response = wp_remote_get($this->metadata_endpoint);
 		$decoded_response = json_decode($response['body'], true);
-		if (count($decoded_response) == 0 )
+
+		if (empty($decoded_response) || !isset($decoded_response) )
 			throw new Exception('Unable to retrieve metadata from ' . $this->metadata_endpoint);
 		
 		$this->metadata = $decoded_response;
@@ -59,7 +61,7 @@ class B2C_Endpoint_Handler {
 		$authorization_endpoint = $this->metadata['authorization_endpoint'].
 											'&response_type='.B2C_Settings::$response_type.
 											'&client_id='.B2C_Settings::$clientID.
-											'&redirect_uri='.B2C_Settings::$redirect_uri.
+											'&redirect_uri='.urlencode(B2C_Settings::$redirect_uri).
 											'&response_mode='.B2C_Settings::$response_mode.
 											'&scope='.B2C_Settings::$scope;
 		return $authorization_endpoint;
@@ -72,7 +74,7 @@ class B2C_Endpoint_Handler {
 	public function get_end_session_endpoint() {
 		
 		$end_session_endpoint = $this->metadata['end_session_endpoint'].
-								'&redirect_uri='.B2C_Settings::$redirect_uri;
+								'&redirect_uri='.urlencode(B2C_Settings::$redirect_uri);
 		return $end_session_endpoint;
 	}
 }
