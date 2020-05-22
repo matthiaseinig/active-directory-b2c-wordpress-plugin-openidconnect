@@ -148,8 +148,16 @@ class B2C_Settings_Page
 
 		add_settings_field(
             'b2c_default_role', // ID
-            'Default New User role', // Title 
-            array( $this, 'b2c_default_role' ), // Callback
+            'Default Wordpress User Role', // Title 
+            array( $this, 'b2c_default_role_callback' ), // Callback
+            'b2c-settings-page', // Page
+            'service_config_section' // Section           
+        );     	
+
+		add_settings_field(
+            'b2c_show_admin_bar', // ID
+            'Show WP Admin Bar For New User', // Title 
+            array( $this, 'b2c_show_admin_bar_callback' ), // Callback
             'b2c-settings-page', // Page
             'service_config_section' // Section           
         );     		
@@ -192,6 +200,9 @@ class B2C_Settings_Page
 
         if( isset( $input['b2c_default_role'] ) )
             $new_input['b2c_default_role'] = sanitize_text_field(strtolower( $input['b2c_default_role'] ));
+
+        if( isset( $input['b2c_show_admin_bar'] ) )
+            $new_input['b2c_show_admin_bar'] = $input['b2c_show_admin_bar'];
 
 
         return $new_input;
@@ -316,13 +327,31 @@ class B2C_Settings_Page
         /** 
      * Get the settings option array and print one of its values
      */
-     public function b2c_default_role()
+     public function b2c_default_role_callback()
      {
-         printf(
-             '<input type="text" id="b2c_default_role" name="b2c_config_elements[b2c_default_role]" value="%s" />',
-             isset( $this->options['b2c_default_role'] ) ? esc_attr( $this->options['b2c_default_role']) : get_option('default_role')
-         );
+        global $wp_roles;
+        $all_roles = $wp_roles->roles;
+
+        $current_value = isset( $this->options['b2c_default_role'] ) ? esc_attr( $this->options['b2c_default_role']) : get_option('default_role');
+
+        echo '<select id="b2c_default_role" name="b2c_config_elements[b2c_default_role]">';
+        foreach ($all_roles as $key => $role){
+                echo '<option value="'.$key.'"'.($current_value == strtolower($key)?' selected="selected"':'').'>'.$role['name'].'</option>';
+        }
+        echo '</select>';  
      }
+
+    /** 
+     * Get the settings option array and print one of its values
+     */
+    public function b2c_show_admin_bar_callback()
+    {
+		if (empty($this->options['b2c_show_admin_bar']))
+            $this->options['b2c_show_admin_bar'] = 0;
+        
+        $current_value = $this->options['b2c_show_admin_bar'];
+        echo '<input type="checkbox" id="b2c_show_admin_bar" name="b2c_config_elements[b2c_show_admin_bar]" value="1" class="code" ' . checked( 1, $current_value, false ) . ' />';
+    }
 
 
 }

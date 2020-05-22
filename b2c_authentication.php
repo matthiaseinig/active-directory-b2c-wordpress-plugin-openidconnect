@@ -143,10 +143,13 @@ function b2c_verify_token() {
 						'user_email' => $email,
 						'display_name' => $name,
 						'first_name' => $first_name,
-						'last_name' => $last_name
+						'last_name' => $last_name,
+						'role' => B2C_Settings::$wp_role,
+						'show_admin_bar_front' => B2C_Settings::$show_admin_bar?"true":"false"
 						);
 
 				$userID = wp_insert_user( $our_userdata ); 
+
 			} else if ($policy == B2C_Settings::$edit_profile_policy) { // Update the existing user w/ new attritubtes
 				
 				$first_name = $token_checker->get_claim('given_name');

@@ -13,6 +13,7 @@ class B2C_Settings {
 	public static $redirect_uri = "";
 	public static $verify_tokens = 1;
 	public static $wp_role = "";
+	public static $show_admin_bar = "";
 	
 	// These settings define the authentication flow, but are not configurable on the settings page
 	// because this plugin is made to support OpenID Connect implicit flow with form post responses
@@ -37,9 +38,14 @@ class B2C_Settings {
 			self::$edit_profile_policy = $config_elements['b2c_edit_profile_policy_id'];
 			self::$password_reset_policy = $config_elements['b2c_password_reset_policy_id'];
 			self::$redirect_uri = home_url().'/'; 
+
 			if (isset($config_elements['b2c_verify_tokens']) && $config_elements['b2c_verify_tokens']) self::$verify_tokens = 1;
 			else self::$verify_tokens = 0;
+			
 			self::$wp_role = $config_elements['b2c_default_role'];
+
+			if (isset($config_elements['b2c_show_admin_bar']) && $config_elements['b2c_show_admin_bar']) self::$show_admin_bar = 1;
+			else self::$show_admin_bar = 0;
 		}
 	}
 	static function metadata_endpoint_begin() {
